@@ -13,22 +13,18 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 )
 
-func FnPost(protocolPath string, file string, idFile string) string {
-	
-	//réimplémenter, tu dois ajouter le idfile string 
-	//creation du host
-	//connexion au relay
-	//construction de l'addresse relayée = relayaddr + peerid
+func FnPost(protocolPath string, filePath string, idFilePath string) string {
 	
 	ctx := context.Background()
 	
+
 	var cfg Protocol	
 	data,_:=os.ReadFile(protocolPath)
 	json.Unmarshal(data, &cfg)
 
-	var IDF IDFile
-	dataID,_:=os.ReadFile(idFile)
-	json.Unmarshal(dataID,&IDF)
+	var idf IDFile
+	dataID,_:=os.ReadFile(idFilePath)
+	json.Unmarshal(dataID,&idf)
 
 
 	h, _:= libp2p.New()
@@ -42,12 +38,12 @@ func FnPost(protocolPath string, file string, idFile string) string {
  	s,_:=	h.NewStream(ctx, ri.ID,protocol.ID(cfg.Protocol))
  	defer s.Close()
 
-	f,_:=os.Open(file)
+	f,_:=os.Open(filePath)
 
 	_,err:=io.Copy(s, f)
 	if err!=nil{
 		fmt.Printf("error sending")
 	}
 
-	return fmt.Sprintf("%s a été envoyé via le protocol %s",file,cfg.Groupname)
+	return fmt.Sprintf("%s a été envoyé via le protocol %s",filePath,cfg.Groupname)
 }

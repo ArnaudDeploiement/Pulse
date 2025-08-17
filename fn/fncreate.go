@@ -9,12 +9,7 @@ import (
 	"path/filepath"
 )
 
-type Protocol struct{
-	Groupname string `json:"Groupname"`
-	Protocol string `json:"protocol"`
-	RelayAddr string`json:"relay_addr"`
-	As string `json:"as"`
-}
+
 
 func FnCreate(groupname string, relayAddr string, outdir string) string {
 	basedir:=`C:/pulse_test`

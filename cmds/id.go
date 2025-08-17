@@ -2,12 +2,13 @@ package cmds
 
 import (
 	"fmt"
+	"pulse/fn"
 
 	"github.com/spf13/cobra"
 )
 
 func IdCmd() *cobra.Command {
-	var mode string // variable pour stocker la valeur du flag
+	var mode string 
 
 	cmd := &cobra.Command{
 		Use:   "id",
@@ -18,14 +19,15 @@ func IdCmd() *cobra.Command {
 			case "id":
 				fmt.Println("get id")
 			case "add":
-			fmt.Printf("add id %s", args[0:])
+				fn.AddPeerId(args[0:])
+
 			default:
 				fmt.Println("erreur")
 			}
 		},
 	}
 
-	// Déclaration du flag UNE seule fois
+	
 	cmd.Flags().StringVarP(&mode, "mode", "m", "id", "Action: id or add")
 
 	return cmd
