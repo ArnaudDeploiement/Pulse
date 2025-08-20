@@ -16,11 +16,11 @@ func IdCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 		
 			switch mode {
-			case "id":
-				fmt.Println("get id")
+			case "get":
+				peerid:=fn.Getid()
+				fmt.Printf("Your PeerID : %s", peerid)
 			case "add":
 				fn.AddPeerId(args[0:])
-
 			default:
 				fmt.Println("erreur")
 			}
@@ -28,7 +28,7 @@ func IdCmd() *cobra.Command {
 	}
 
 	
-	cmd.Flags().StringVarP(&mode, "mode", "m", "id", "Action: id or add")
+	cmd.Flags().StringVarP(&mode, "mode", "m", "get", "Action: get or add")
 
 	return cmd
 }

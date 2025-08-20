@@ -10,3 +10,8 @@ type Protocol struct {
 type IDFile struct {
 	PeerId []string `json:"peerID"`
 }
+
+type IdPeer struct {
+	PeerId string `json:"peerID"`
+	Priv   string `json:"priv"`
+}

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -14,25 +15,37 @@ import (
 	"strings"
 	"time"
 
-	"github.com/libp2p/go-libp2p"
+	lcrypto "github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/protocol"
 	ma "github.com/multiformats/go-multiaddr"
+
+	"github.com/libp2p/go-libp2p"
 )
 
-func FnGet(protocolPath, storeDir string)  {
+func FnGet(protocolPath, storeDir, privPath string)  {
 	ctx := context.Background()
 
+	//insère la clé privée générer à partir du peerid
 
-	cfg:=unmarshal(protocolPath)
+	data:=unmarshalPriv(privPath)
+	raw,_:=base64.StdEncoding.DecodeString(data.Priv)
+	priv,_:=lcrypto.UnmarshalPrivateKey(raw)
+	
+
+
+	cfg:=unmarshalProtocol(protocolPath)
 	keep:=keep(cfg)
 
 	os.MkdirAll(storeDir, 0o755)
 
 
-	h, _ := libp2p.New()
-	fmt.Println("📡 PeerID :", h.ID().String())
+	h, _ := libp2p.New(libp2p.Identity(priv))
+	if data.PeerId == h.ID().String() {
+	fmt.Println("📡 PeerID is ok :", h.ID().String())
+	}
+	
 
 	maddr, _ := ma.NewMultiaddr(cfg.RelayAddr)
 	ri, _ := peer.AddrInfoFromP2pAddr(maddr)
@@ -76,15 +89,21 @@ func FnGet(protocolPath, storeDir string)  {
 }
 
 
-func unmarshal(protocolPath string) Protocol {
+func unmarshalProtocol(protocolPath string) Protocol {
 	data, _ := os.ReadFile(protocolPath)
 	var cfg Protocol
 	json.Unmarshal(data, &cfg)
 	return cfg
 }
+func unmarshalPriv(privPath string) IdPeer {
+	data, _ := os.ReadFile(privPath)
+	var privcfg IdPeer
+	json.Unmarshal(data, &privcfg)
+	return privcfg
+}
 
 func keep(cfg Protocol) string{
-		base := `C:\pulse\receivers`
+		base := `c:\pulse_test\receivers`
 		os.MkdirAll(base, 0o755)
 		sum:=sha256.Sum256([]byte(cfg.Protocol))
 		name:=hex.EncodeToString(sum[:8])

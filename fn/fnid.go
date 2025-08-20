@@ -7,6 +7,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/libp2p/go-libp2p/core/crypto"
+	lcrypto "github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/libp2p/go-libp2p/core/peer"
 )
 
 
@@ -24,7 +28,7 @@ func AddPeerId(peerID []string) string {
 
 	name:=make([]byte,8)
 	rand.Read(name)
-	file:=base64.RawURLEncoding.EncodeToString(name)+".json"
+	file:=base64.RawURLEncoding.EncodeToString(name)+"_GroupID.json"
 	
 	os.WriteFile(filepath.Join(basedir,file),data,0o755)
 
@@ -34,4 +38,33 @@ func AddPeerId(peerID []string) string {
 
 	return path 
 
+}
+
+func Getid() string {
+
+	basedir:=`C:/pulse_test/IDFile`
+	os.MkdirAll(basedir, 0o755); 
+
+	privkey,_,_:=crypto.GenerateEd25519Key(rand.Reader)
+	id,_:=peer.IDFromPrivateKey(privkey)
+	raw,_:= lcrypto.MarshalPrivateKey(privkey)
+
+	peerid:=IdPeer{
+		PeerId: id.String(),
+		Priv: base64.StdEncoding.EncodeToString(raw),
+	}
+
+	data,_:=json.MarshalIndent(peerid," ", " ")
+
+	name:=make([]byte,8)
+	rand.Read(name)
+	file:=base64.RawURLEncoding.EncodeToString(name)+"_PeerID.json"
+	
+	os.WriteFile(filepath.Join(basedir,file),data,0o755)
+
+
+	path:=filepath.Join(basedir,file)
+	fmt.Printf("Your file has been created : %s\n", path)
+
+	return id.String()	
 }
