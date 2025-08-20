@@ -15,7 +15,8 @@ func FnCreate(groupname string, relayAddr string, outdir string) string {
 	basedir:=`C:/pulse_test`
 	os.MkdirAll(basedir, 0o755); 
 	
-	if outdir == ""{ outdir=`.`}
+
+	if outdir == ""{ outdir=`./repo`}
 	os.MkdirAll(outdir,0o755)
 	
 	protocol:=Protocol{
