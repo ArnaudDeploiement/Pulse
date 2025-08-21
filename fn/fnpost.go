@@ -1,49 +1,85 @@
 package fn
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
+	"path/filepath"
+	"time"
 
-	"github.com/libp2p/go-libp2p"
+	libp2p "github.com/libp2p/go-libp2p"
+	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/protocol"
 	ma "github.com/multiformats/go-multiaddr"
 )
 
-func FnPost(protocolPath string, filePath string, idFilePath string) string {
-	
+func FnPost(protocolPath, filePath, idFilePath string) string {
 	ctx := context.Background()
-	
 
-	var cfg Protocol	
-	data,_:=os.ReadFile(protocolPath)
-	json.Unmarshal(data, &cfg)
+	// Config protocole
+	var cfg Protocol
+	b, _ := os.ReadFile(protocolPath)
+	_ = json.Unmarshal(b, &cfg)
 
+	// Liste des destinataires
 	var idf IDFile
-	dataID,_:=os.ReadFile(idFilePath)
-	json.Unmarshal(dataID,&idf)
+	bi, _ := os.ReadFile(idFilePath)
+	_ = json.Unmarshal(bi, &idf)
 
+	// Host émetteur avec support du relay
+	h, _ := libp2p.New(
+		libp2p.EnableRelay(), // nécessaire pour dialer /p2p-circuit
+	)
 
-	h, _:= libp2p.New()
-	fmt.Printf("Connexion %s", h.ID().String())
+	// Connexion au relay (une seule fois)
+	relayMA, _ := ma.NewMultiaddr(cfg.RelayAddr)
+	relayInfo, _ := peer.AddrInfoFromP2pAddr(relayMA)
+	_ = h.Connect(ctx, *relayInfo)
+	fmt.Println("✅ Connecté au relay:", relayInfo.ID)
 
-	maddr, _ := ma.NewMultiaddr(cfg.RelayAddr)
-	ri, _ := peer.AddrInfoFromP2pAddr(maddr)
-	h.Connect(ctx, *ri)
-	fmt.Println("✅ Connecté au relay")
+	// Préparer le payload
+	payload, _ := os.ReadFile(filePath)
+	name := filepath.Base(filePath)
 
- 	s,_:=	h.NewStream(ctx, ri.ID,protocol.ID(cfg.Protocol))
- 	defer s.Close()
+	// Envoi à chaque PeerID
+	for _, pid := range idf.PeerId {
+		// Adresse circuit complète: relay + /p2p-circuit + dest
+		full := fmt.Sprintf("%s/p2p-circuit/p2p/%s", cfg.RelayAddr, pid)
+		maddr, _ := ma.NewMultiaddr(full)
+		destInfo, _ := peer.AddrInfoFromP2pAddr(maddr)
 
-	f,_:=os.Open(filePath)
+		// Donner l'adresse circuit au peerstore et forcer un dial via le relay
+		h.Peerstore().AddAddrs(destInfo.ID, destInfo.Addrs, time.Minute)
+		_ = h.Connect(ctx, *destInfo)
 
-	_,err:=io.Copy(s, f)
-	if err!=nil{
-		fmt.Printf("error sending")
+		// Attendre brièvement que l'état passe à Connected
+		for i := 0; i < 10; i++ {
+			if h.Network().Connectedness(destInfo.ID) == network.Connected {
+				break
+			}
+			time.Sleep(200 * time.Millisecond)
+		}
+
+		// Ouvrir un stream VERS le destinataire (pas le relay)
+		s, _ := h.NewStream(ctx, destInfo.ID, protocol.ID(cfg.Protocol))
+		if s == nil {
+			fmt.Println("stream=nil → circuit non établi pour", pid)
+			continue
+		}
+
+		// Envoyer: nom de fichier (ligne) puis le contenu
+		w := bufio.NewWriter(s)
+		fmt.Fprintln(w, name)
+		w.Flush()
+
+		s.Write(payload)
+		s.Close()
+
+		fmt.Println("📤 sent to:", pid)
 	}
 
-	return fmt.Sprintf("%s a été envoyé via le protocol %s",filePath,cfg.Groupname)
+	return fmt.Sprintf("✅ %s envoyé via le protocole %s", filePath, cfg.Groupname)
 }

@@ -19,49 +19,52 @@ import (
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/protocol"
+	rclient "github.com/libp2p/go-libp2p/p2p/protocol/circuitv2/client" // ← AJOUT
 	ma "github.com/multiformats/go-multiaddr"
 
 	"github.com/libp2p/go-libp2p"
 )
 
-func FnGet(protocolPath, storeDir, privPath string)  {
+func FnGet(protocolPath, storeDir, privPath string) {
 	ctx := context.Background()
 
-	//insère la clé privée générer à partir du peerid
+	data := unmarshalPriv(privPath)
+	raw, _ := base64.StdEncoding.DecodeString(data.Priv)
+	priv, _ := lcrypto.UnmarshalPrivateKey(raw)
 
-	data:=unmarshalPriv(privPath)
-	raw,_:=base64.StdEncoding.DecodeString(data.Priv)
-	priv,_:=lcrypto.UnmarshalPrivateKey(raw)
-	
-
-
-	cfg:=unmarshalProtocol(protocolPath)
-	keep:=keep(cfg)
+	cfg := unmarshalProtocol(protocolPath)
+	keep := keep(cfg)
 
 	os.MkdirAll(storeDir, 0o755)
 
-
-	h, _ := libp2p.New(libp2p.Identity(priv))
+	h, _ := libp2p.New(libp2p.Identity(priv), libp2p.EnableRelay(), libp2p.EnableRelayService())
 	if data.PeerId == h.ID().String() {
-	fmt.Println("📡 PeerID is ok :", h.ID().String())
+		fmt.Println("📡 PeerID is ok :", h.ID().String())
 	}
-	
 
 	maddr, _ := ma.NewMultiaddr(cfg.RelayAddr)
 	ri, _ := peer.AddrInfoFromP2pAddr(maddr)
 	h.Connect(ctx, *ri)
 	fmt.Println("✅ Connecté au relay")
 
-	 handler := func (s network.Stream) {
+res, err := rclient.Reserve(ctx, h, *ri)
+if err == nil {
+    fmt.Println("🎫 Réservation OK, expires in:", res.Expiration) // TTL ~ 2min
+} else {
+    fmt.Println("❌ Reservation échouée:", err)
+}
+
+
+
+	handler := func(s network.Stream) {
 		defer s.Close()
-		
-		reader:=bufio.NewReader(s)
-		filename,_:=reader.ReadString('\n')
-		filename=strings.TrimSpace(filename)
-		filename=filepath.Base(filename)
 
+		reader := bufio.NewReader(s)
+		filename, _ := reader.ReadString('\n')
+		filename = strings.TrimSpace(filename)
+		filename = filepath.Base(filename)
 
-		path:=filepath.Join(storeDir,filename)
+		path := filepath.Join(storeDir, filename)
 		f, _ := os.Create(path)
 		defer f.Close()
 		io.Copy(f, reader)
@@ -82,12 +85,10 @@ func FnGet(protocolPath, storeDir, privPath string)  {
 			}
 		}
 	}()
-	
+
 	fmt.Println("👂 En écoute sur", cfg.Protocol, "→ dépôt :", storeDir)
-    select {}
-
+	select {}
 }
-
 
 func unmarshalProtocol(protocolPath string) Protocol {
 	data, _ := os.ReadFile(protocolPath)

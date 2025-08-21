@@ -17,10 +17,9 @@ func PostCmd() *cobra.Command{
 	cmd := &cobra.Command{
 		Use:   "post",
 		Short: "Publish data to a protocol",
-		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-		if protocol=="" || file == ""   {
-				fmt.Printf("You have to specify Protocol path & File path")
+		if protocol=="" || file == "" || idFile ==""  {
+				fmt.Printf("You have to specify Protocol, File & idFile path")
 				os.Exit(1)
 			}
 			
@@ -34,6 +33,8 @@ func PostCmd() *cobra.Command{
 	cmd.MarkFlagRequired("protocol")
 	cmd.Flags().StringVarP(&file, "file", "f", "", "File Path")
 	cmd.MarkFlagRequired("file")
+	cmd.Flags().StringVarP(&idFile, "IdFile", "i", "", "IdFile Path")
+	cmd.MarkFlagRequired("IdFile")
 
 	return cmd
 
