@@ -1,23 +1,17 @@
 package cmds
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
+	"pulse/fn"
 )
 
-func ListCmd() *cobra.Command{
-
-var listgroup []string;
-		
+func ListCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "Protocols list",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("voici la liste des groupes %s", listgroup)
-	},
-}
-
-return cmd
-
+			fn.FnList()
+		},
+	}
+	return cmd
 }

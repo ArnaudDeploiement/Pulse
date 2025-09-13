@@ -8,24 +8,23 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func PostCmd() *cobra.Command{
+func PostCmd() *cobra.Command {
 
 	var file string
 	var protocol string
 	var idFile string
-	
+
 	cmd := &cobra.Command{
 		Use:   "post",
 		Short: "Publish data to a protocol",
 		Run: func(cmd *cobra.Command, args []string) {
-		if protocol=="" || file == "" || idFile ==""  {
+			if protocol == "" || file == "" || idFile == "" {
 				fmt.Printf("You have to specify Protocol, File & idFile path")
 				os.Exit(1)
 			}
-			
-			fn.FnPost(protocol,file, idFile)
-			
-			
+
+			fmt.Println(fn.FnPost(protocol, file, idFile))
+
 		},
 	}
 

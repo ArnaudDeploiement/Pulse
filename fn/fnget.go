@@ -3,14 +3,11 @@ package fn
 import (
 	"bufio"
 	"context"
-	"crypto/sha256"
 	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -47,14 +44,12 @@ func FnGet(protocolPath, storeDir, privPath string) {
 	h.Connect(ctx, *ri)
 	fmt.Println("✅ Connecté au relay")
 
-res, err := rclient.Reserve(ctx, h, *ri)
-if err == nil {
-    fmt.Println("🎫 Réservation OK, expires in:", res.Expiration) // TTL ~ 2min
-} else {
-    fmt.Println("❌ Reservation échouée:", err)
-}
-
-
+	res, err := rclient.Reserve(ctx, h, *ri)
+	if err == nil {
+		fmt.Println("🎫 Réservation OK, expires in:", res.Expiration) // TTL ~ 2min
+	} else {
+		fmt.Println("❌ Reservation échouée:", err)
+	}
 
 	handler := func(s network.Stream) {
 		defer s.Close()
@@ -80,8 +75,7 @@ if err == nil {
 			if _, err := os.Stat(keep); os.IsNotExist(err) {
 				fmt.Println("🛑 Stop détecté")
 				h.Close()
-				exec.Command("taskkill", "/PID", fmt.Sprint(os.Getpid()), "/F").Run()
-				return
+				os.Exit(0)
 			}
 		}
 	}()
@@ -103,12 +97,10 @@ func unmarshalPriv(privPath string) IdPeer {
 	return privcfg
 }
 
-func keep(cfg Protocol) string{
-		base := `c:\pulse_test\receivers`
-		os.MkdirAll(base, 0o755)
-		sum:=sha256.Sum256([]byte(cfg.Protocol))
-		name:=hex.EncodeToString(sum[:8])
-		keep := filepath.Join(base, name+".keep")
-		os.WriteFile(keep, []byte("1"), 0o600)
-		return keep
-	}
+func keep(cfg Protocol) string {
+	base := receiversDir()
+	name := sanitize(cfg.Groupname)
+	keep := filepath.Join(base, name+".keep")
+	os.WriteFile(keep, []byte(cfg.Protocol), 0o600)
+	return keep
+}
