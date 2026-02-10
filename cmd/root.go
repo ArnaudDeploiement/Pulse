@@ -59,6 +59,7 @@ func init() {
 		listenCmd,
 		statusCmd,
 		stopCmd,
+		relayCmd,
 	)
 
 	rootCmd.SetHelpTemplate(rootHelpTmpl)
