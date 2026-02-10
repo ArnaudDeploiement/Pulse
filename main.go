@@ -1,5 +1,7 @@
 package main
 
+import "pulse/cmd"
+
 func main() {
-	cli()
+	cmd.Execute()
 }
