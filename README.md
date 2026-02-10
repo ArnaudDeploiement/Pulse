@@ -1,4 +1,4 @@
-# Pulse v2
+# Pulse
 
 P2P file sharing CLI. No servers. No cloud. Just peers.
 
@@ -68,3 +68,4 @@ pulse/
 - **UX**: Charm-based TUI (spinners, progress bars, styled tables), non-TTY fallback
 - **Architecture**: Proper error handling, clean separation of concerns, TOML config
 - **Simplicity**: Reference groups by name, no manual JSON file management
+
