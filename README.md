@@ -1,7 +1,8 @@
 # Pulse
 
 P2P file sharing CLI. No servers. No cloud. Just peers.
-
+
+
 
 ## Installation
 
@@ -59,12 +60,3 @@ pulse/
 │   └── ui/                 # Bubbletea models, Lipgloss styles
 └── main.go
 ```
-
-## Key improvements over v1
-
-- **Security**: BLAKE3 integrity checks, sender authentication, `0600` file permissions
-- **Reliability**: Automatic relay renewal, retry with backoff, graceful shutdown
-- **UX**: Charm-based TUI (spinners, progress bars, styled tables), non-TTY fallback
-- **Architecture**: Proper error handling, clean separation of concerns, TOML config
-- **Simplicity**: Reference groups by name, no manual JSON file management
-
