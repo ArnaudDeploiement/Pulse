@@ -1,8 +1,7 @@
 # Pulse
 
 P2P file sharing CLI. No servers. No cloud. Just peers.
-
-Outil CLI en Go pour le partage direct de fichiers entre pairs via libp2p, sans serveur central ni stockage intermédiaire. Interface construite avec le stack [Charm](https://charm.sh) (Bubbletea, Lipgloss, Bubbles).
+
 
 ## Installation
 
